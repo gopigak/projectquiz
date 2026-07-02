@@ -4,7 +4,7 @@ let isConnected = false;
 
 const connectDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
     console.log(`Connecting to MongoDB at: ${mongoUri}...`);
     
     // Set low timeout (2.5 seconds) to fallback quickly if offline

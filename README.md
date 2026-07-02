@@ -1,84 +1,127 @@
-# Online Quiz & Learning Platform
+# EduQuiz - Premium Full-Stack Online Quiz & Learning Platform
 
-Welcome to the Online Quiz & Learning Platform! This project is built using a modern stack: React with Vite and TailwindCSS for the frontend, and Node.js with Express and MongoDB for the backend.
-
-It is fully prepared for unified, single-server production deployment (the Express backend serves the React frontend static build).
+EduQuiz is a professional, production-ready full-stack learning platform designed for mastering programming languages and technical assessments. The project is split into two primary components: a modern React frontend (powered by Vite and Tailwind CSS) and a robust Node.js/Express backend (backed by MongoDB).
 
 ---
 
-## 🛠️ Local Development
+## 📂 Project Structure
 
-### 1. Install Dependencies
-Run from the root directory (this installs both frontend and backend dependencies):
-```bash
-npm install
 ```
-
-### 2. Configure Environment Variables
-Create a `.env` file in the `backend/` directory:
-```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/quizapp
-JWT_SECRET=your_jwt_secret_key_here
-```
-
-### 3. Run Development Servers
-Start both the React development server and the Express backend:
-- **Frontend** (Vite on [http://localhost:5173](http://localhost:5173)):
-  ```bash
-  npm run dev
-  ```
-- **Backend** (Express on [http://localhost:5000](http://localhost:5000)):
-  ```bash
-  npm run dev --prefix backend
-  ```
-
-### 4. Seed Mock Data (Optional)
-To populate the database with courses, lessons, and questions:
-```bash
-npm run seed --prefix backend
+project-root/
+│
+├── frontend/             # React Client (Vite)
+│   ├── src/
+│   │   ├── assets/       # Media and static assets
+│   │   ├── components/   # Reusable UI components
+│   │   ├── context/      # React contexts (Auth, Course, Theme)
+│   │   ├── hooks/        # Custom React hooks
+│   │   ├── layouts/      # Reusable page layouts (MainLayout)
+│   │   ├── pages/        # Router pages
+│   │   ├── routes/       # React Router configurations
+│   │   └── services/     # Axios client configuration
+│   ├── public/           # Static public files
+│   ├── package.json      # Frontend package configuration
+│   └── vite.config.js    # Vite compiler configuration
+│
+├── backend/              # Node.js Express API Server
+│   ├── config/           # Database and configurations
+│   ├── controllers/      # Route controller handlers (Auth, Course, Favorites, Admin)
+│   ├── data/             # Seeding files and mock databases
+│   ├── middleware/       # Express route protection middleware
+│   ├── models/           # Mongoose schemas (User, Course, Favorite, Feedback)
+│   ├── routes/           # API routes definitions
+│   ├── uploads/          # User upload directories
+│   ├── server.js         # Entry point server script
+│   └── package.json      # Backend package configuration
+│
+├── README.md             # Platform documentation
+└── .gitignore            # Git exclusion rules
 ```
 
 ---
 
-## 🚀 Deployment & Hosting Guidelines
+## 🛠️ Local Development Setup
 
-This fullstack application is configured to run as a single unified service. The backend server automatically serves the compiled frontend assets (`dist/` directory) and maps client-side React routes.
+To run the application locally, you will start the frontend and backend servers in separate terminals.
 
-### Required Environment Variables
-Configure these variables in your hosting provider's dashboard:
-- `NODE_ENV`: Set to `production` (tells the backend to build and serve static files).
-- `MONGO_URI`: Your MongoDB database connection string (e.g., MongoDB Atlas).
-- `JWT_SECRET`: A secure key for encoding JWT authentication tokens.
-- `PORT`: Set automatically by platforms like Render/Railway/Heroku.
+### 1. Backend Setup & Startup
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file in the `backend/` folder and configure it:
+   ```env
+   PORT=5000
+   MONGODB_URI=mongodb://localhost:27017/quizapp
+   JWT_SECRET=your_jwt_secret_key_here
+   FRONTEND_URL=http://localhost:5173
+   ```
+4. Seed the database with mock courses, chapters, and questions:
+   ```bash
+   npm run seed
+   ```
+5. Start the backend server:
+   - **Development mode (auto-reload)**:
+     ```bash
+     npm run dev
+     ```
+   - **Production mode**:
+     ```bash
+     npm start
+     ```
+   *Note: If no local MongoDB is running, the server automatically falls back to an in-memory database mock for a seamless offline sandbox experience.*
 
-### Option 1: Render Deployment (Web Service)
-1. Log in to [Render](https://render.com/) and create a new **Web Service**.
-2. Connect your GitHub repository.
-3. Configure the following settings:
-   - **Environment**: `Node`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-4. Add the required Environment Variables in the **Environment** tab.
-5. Deploy! Render will build the frontend assets, install backend dependencies, and run the Express app.
+### 2. Frontend Setup & Startup
+1. Navigate to the `frontend/` directory:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file in the `frontend/` folder:
+   ```env
+   VITE_API_URL=http://localhost:5000/api
+   ```
+4. Start the frontend development server:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-### Option 2: Railway Deployment
-1. Log in to [Railway](https://railway.app/) and start a new project.
-2. Select **Deploy from GitHub repo** and connect your repository.
-3. Railway will automatically detect the root `package.json`.
-4. Set the Environment Variables (`NODE_ENV=production`, `MONGO_URI`, `JWT_SECRET`).
-5. Railway uses the standard scripts and will start the server using the root `npm start` script.
+---
 
-### Option 3: VPS / Manual Server Hosting
-To build and run the production application manually:
-```bash
-# 1. Install all dependencies
-npm install
+## 🚀 Production Deployment Instructions
 
-# 2. Build the React frontend
-npm run build
+### 1. Frontend Deployment (Vercel)
+1. Log in to your [Vercel Dashboard](https://vercel.com).
+2. Click **New Project** and import your GitHub repository.
+3. Configure the Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Expand **Environment Variables** and add:
+   - `VITE_API_URL` = `https://your-backend-render-url.onrender.com/api`
+5. Click **Deploy**.
 
-# 3. Start the server in production mode
-NODE_ENV=production PORT=8080 node backend/server.js
-```
-The site will be hosted on port `8080` (or whichever port you specify).
+### 2. Backend Deployment (Render)
+1. Log in to your [Render Dashboard](https://render.com).
+2. Create a new **Web Service** and connect your GitHub repository.
+3. Configure the Web Service:
+   - **Language**: `Node`
+   - **Root Directory**: `backend` (Leave empty if configuring Build/Start commands from root)
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+4. Expand **Environment Variables** and add:
+   - `NODE_ENV` = `production`
+   - `PORT` = `5000` (Render handles this automatically, but set to 5000 as default fallback)
+   - `MONGODB_URI` = `mongodb+srv://<username>:<password>@cluster0.mongodb.net/quizapp?retryWrites=true&w=majority` (Your MongoDB Atlas connection URI)
+   - `JWT_SECRET` = `your_strong_random_jwt_secret_key`
+   - `FRONTEND_URL` = `https://your-deployed-frontend.vercel.app` (For secure CORS clearance)
+5. Click **Deploy Web Service**.

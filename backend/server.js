@@ -11,6 +11,7 @@ const quizRoutes = require('./routes/quizRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const contactRoutes = require('./routes/contactRoutes');
+const favoriteRoutes = require('./routes/favoriteRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -20,12 +21,34 @@ connectDB();
 
 const app = express();
 
-// Middlewares
+// Configure CORS correctly for local development and deployed frontend
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: '*', // Adjust to specific frontend domain (like http://localhost:5173) in production
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+    const isVercel = origin.endsWith('.vercel.app');
+    const isAllowed = allowedOrigins.includes(origin) || isLocalhost || isVercel;
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,15 +64,16 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/favorites', favoriteRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Set static folder
-  app.use(express.static(path.join(__dirname, '../dist')));
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
   // Any route that doesn't match an API route should serve index.html
   app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../', 'dist', 'index.html'));
+    res.sendFile(path.resolve(__dirname, '../', 'frontend', 'dist', 'index.html'));
   });
 } else {
   // 404 Route handler for development

@@ -25,6 +25,7 @@ import {
   FaCheck
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import API from '../services/api';
 
 const Notes = () => {
   const { id } = useParams();
@@ -105,17 +106,29 @@ const Notes = () => {
   const bookmarkKey = `${id}_chap_${activeChapterIndex}`;
   const isBookmarked = bookmarks.includes(bookmarkKey);
 
-  const handleToggleBookmark = () => {
+  const handleToggleBookmark = async () => {
     let updated;
     if (isBookmarked) {
       updated = bookmarks.filter(b => b !== bookmarkKey);
       toast.success('Chapter removed from bookmarks! 🔖');
     } else {
       updated = [...bookmarks, bookmarkKey];
-      toast.success('Chapter added to bookmarks! 🔖');
+      toast.success('Chapter added to bookmarks! 📌');
     }
     setBookmarks(updated);
     localStorage.setItem('notes_bookmarks', JSON.stringify(updated));
+
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      if (userInfo) {
+        await API.post('/favorites', {
+          type: 'chapter',
+          item: bookmarkKey
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to sync chapter bookmark with server:', error.message);
+    }
   };
 
   // Completion statuses

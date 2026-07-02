@@ -17,16 +17,40 @@ export const CourseProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const fetchFavorites = async () => {
+    try {
+      const { data } = await API.get('/favorites');
+      const questionBookmarks = data.filter(f => f.type === 'question').map(f => f.item);
+      setBookmarks(questionBookmarks);
+      
+      const chapterBookmarks = data.filter(f => f.type === 'chapter').map(f => f.item);
+      localStorage.setItem('notes_bookmarks', JSON.stringify(chapterBookmarks));
+    } catch (error) {
+      console.warn('Failed to fetch bookmarks from server:', error.message);
+    }
+  };
+
   // Sync bookmarks changes with local storage
   useEffect(() => {
     localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
+
+  useEffect(() => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      fetchFavorites();
+    }
+  }, []);
 
   const fetchCourses = async () => {
     setLoading(true);
     try {
       const { data } = await API.get('/courses');
       setCourses(data);
+      const userInfo = localStorage.getItem('userInfo');
+      if (userInfo) {
+        fetchFavorites();
+      }
     } catch (error) {
       console.error('Failed to load courses:', error.message);
       toast.error('Failed to load courses. Please try again.');
@@ -185,7 +209,7 @@ export const CourseProvider = ({ children }) => {
   };
 
   // Bookmarking operations
-  const toggleBookmark = (questionObj) => {
+  const toggleBookmark = async (questionObj) => {
     const isBookmarked = bookmarks.some((q) => q.questionText === questionObj.questionText);
     if (isBookmarked) {
       setBookmarks((prev) => prev.filter((q) => q.questionText !== questionObj.questionText));
@@ -193,6 +217,18 @@ export const CourseProvider = ({ children }) => {
     } else {
       setBookmarks((prev) => [...prev, questionObj]);
       toast.success('Added question to bookmarks! 📌');
+    }
+
+    try {
+      const userInfo = localStorage.getItem('userInfo');
+      if (userInfo) {
+        await API.post('/favorites', {
+          type: 'question',
+          item: questionObj
+        });
+      }
+    } catch (error) {
+      console.warn('Failed to sync bookmark with server:', error.message);
     }
   };
 

@@ -9,7 +9,7 @@ dotenv.config();
 
 const seedDB = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
+    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
     console.log(`Connecting to MongoDB at: ${mongoUri}`);
     await mongoose.connect(mongoUri);
 
