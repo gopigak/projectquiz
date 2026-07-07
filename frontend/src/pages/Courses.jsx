@@ -24,20 +24,20 @@ const Courses = () => {
   // If it was attempted but not passed, progress is 50%.
   // Otherwise, progress is 0%.
   const getCourseProgress = (courseId) => {
-    const attempts = quizHistory.filter((h) => h.courseId === courseId);
+    const attempts = Array.isArray(quizHistory) ? quizHistory.filter((h) => h.courseId === courseId) : [];
     if (attempts.length === 0) return 0;
     const passed = attempts.some((h) => h.passStatus);
     return passed ? 100 : 50;
   };
 
-  const filteredCourses = courses.filter((course) => {
+  const filteredCourses = Array.isArray(courses) ? courses.filter((course) => {
     const matchesSearch =
       course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       course.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDifficulty =
       selectedDifficulty === 'All' || course.difficulty === selectedDifficulty;
     return matchesSearch && matchesDifficulty;
-  });
+  }) : [];
 
   return (
     <div className="space-y-8">

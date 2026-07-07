@@ -14,7 +14,7 @@ const Home = () => {
   }, []);
 
   // Filter 4 main beginner/intermediate courses to display as features
-  const featuredCourses = courses.length > 0 
+  const featuredCourses = Array.isArray(courses) && courses.length > 0 
     ? courses.slice(0, 4) 
     : [
         { _id: '1', name: 'HTML', courseId: 'html', description: 'Learn HyperText Markup Language, the standard markup language for creating web pages and structure.', difficulty: 'Beginner', estimatedTime: '2 hours', chaptersCount: 1, questionsCount: 3 },

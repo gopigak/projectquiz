@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+const questionSchema = new mongoose.Schema({
+  questionText: { type: String, required: true },
+  options: [{ type: String, required: true }],
+  correctAnswer: { type: Number, required: true }, // index of correct option (0-3)
+  explanation: { type: String },
+  difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' }
+});
+
 const chapterSchema = new mongoose.Schema({
   title: { type: String, required: true },
   definition: { type: String },
@@ -14,15 +22,8 @@ const chapterSchema = new mongoose.Schema({
   }],
   importantPoints: [{ type: String }],
   tips: [{ type: String }],
-  summary: { type: String }
-});
-
-const questionSchema = new mongoose.Schema({
-  questionText: { type: String, required: true },
-  options: [{ type: String, required: true }],
-  correctAnswer: { type: Number, required: true }, // index of correct option (0-3)
-  explanation: { type: String },
-  difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' }
+  summary: { type: String },
+  questions: [questionSchema]
 });
 
 const courseSchema = new mongoose.Schema({

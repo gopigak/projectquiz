@@ -88,8 +88,9 @@ const Notes = () => {
     return <Loader />;
   }
 
-  const { name, chapters = [] } = activeNotes;
-  const activeChapter = chapters[activeChapterIndex];
+  const { name, chapters = [] } = activeNotes || {};
+  const chaptersList = Array.isArray(chapters) ? chapters : [];
+  const activeChapter = chaptersList[activeChapterIndex];
 
   if (!activeChapter) {
     return (
@@ -99,7 +100,7 @@ const Notes = () => {
     );
   }
 
-  const isLastChapter = activeChapterIndex === chapters.length - 1;
+  const isLastChapter = activeChapterIndex === chaptersList.length - 1;
   const isLastTopic = activeTopicIndex === 3;
 
   // Bookmarks check
@@ -333,7 +334,7 @@ const Notes = () => {
             Course Chapters
           </h3>
           <div className="glass-panel p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-1 bg-white/70 dark:bg-slate-900/60">
-            {chapters.map((chap, idx) => {
+            {chaptersList.map((chap, idx) => {
               const isActive = activeChapterIndex === idx;
               const isUnlocked = isChapterUnlocked(idx);
               const isDone = isChapterCompleted(idx);
@@ -382,7 +383,7 @@ const Notes = () => {
               </div>
 
               <div className="flex-grow overflow-y-auto space-y-1">
-                {chapters.map((chap, idx) => {
+                {chaptersList.map((chap, idx) => {
                   const isActive = activeChapterIndex === idx;
                   const isUnlocked = isChapterUnlocked(idx);
                   const isDone = isChapterCompleted(idx);

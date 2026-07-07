@@ -19,7 +19,7 @@ const Profile = () => {
   }
 
   // Filter out passing quiz results that qualify for a certificate (>= 75%)
-  const certifiedResults = quizHistory.filter((hist) => hist.percentage >= 75);
+  const certifiedResults = Array.isArray(quizHistory) ? quizHistory.filter((hist) => hist.percentage >= 75) : [];
 
   const handleDownloadCertificate = (hist) => {
     // Navigates directly to the results certificate layout for printing
@@ -105,7 +105,7 @@ const Profile = () => {
               <h3 className="font-extrabold text-slate-855 dark:text-white text-base">Earned Badges</h3>
             </div>
 
-            {user.badges && user.badges.length > 0 ? (
+            {Array.isArray(user.badges) && user.badges.length > 0 ? (
               <div className="flex flex-wrap gap-2.5">
                 {user.badges.map((badge, idx) => (
                   <div
@@ -130,7 +130,7 @@ const Profile = () => {
             <h3 className="font-extrabold text-slate-855 dark:text-white text-base">Quiz Assessment History</h3>
           </div>
 
-          {quizHistory.length > 0 ? (
+          {Array.isArray(quizHistory) && quizHistory.length > 0 ? (
             <div className="space-y-3.5 max-h-[360px] overflow-y-auto pr-1">
               {quizHistory.map((hist, index) => (
                 <div

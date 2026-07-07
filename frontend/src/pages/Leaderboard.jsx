@@ -49,7 +49,7 @@ const Leaderboard = () => {
             className="appearance-none pl-3 pr-9 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 shadow-sm hover:border-indigo-500 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all cursor-pointer min-w-[200px]"
           >
             <option value="overall">🏆 Global XP Leaderboard</option>
-            {courses.map((course) => (
+            {Array.isArray(courses) && courses.map((course) => (
               <option key={course._id} value={course.courseId}>
                 📚 {course.name} Assessment
               </option>
@@ -64,7 +64,7 @@ const Leaderboard = () => {
       {/* Leaderboard Rankings List */}
       {loading ? (
         <Loader />
-      ) : leaderboard.length > 0 ? (
+      ) : Array.isArray(leaderboard) && leaderboard.length > 0 ? (
         <div className="glass-panel rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">

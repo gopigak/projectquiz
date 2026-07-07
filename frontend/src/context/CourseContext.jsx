@@ -20,11 +20,13 @@ export const CourseProvider = ({ children }) => {
   const fetchFavorites = async () => {
     try {
       const { data } = await API.get('/favorites');
-      const questionBookmarks = data.filter(f => f.type === 'question').map(f => f.item);
-      setBookmarks(questionBookmarks);
-      
-      const chapterBookmarks = data.filter(f => f.type === 'chapter').map(f => f.item);
-      localStorage.setItem('notes_bookmarks', JSON.stringify(chapterBookmarks));
+      if (Array.isArray(data)) {
+        const questionBookmarks = data.filter(f => f.type === 'question').map(f => f.item);
+        setBookmarks(questionBookmarks);
+        
+        const chapterBookmarks = data.filter(f => f.type === 'chapter').map(f => f.item);
+        localStorage.setItem('notes_bookmarks', JSON.stringify(chapterBookmarks));
+      }
     } catch (error) {
       console.warn('Failed to fetch bookmarks from server:', error.message);
     }

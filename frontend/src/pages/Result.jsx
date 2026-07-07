@@ -40,7 +40,7 @@ const Result = () => {
       }
     } else {
       fetchQuizHistory().then((historyList) => {
-        const matches = historyList.filter(q => q.courseId === id);
+        const matches = Array.isArray(historyList) ? historyList.filter(q => q.courseId === id) : [];
         if (matches.length > 0) {
           setResult(matches[0]);
           if (matches[0].percentage >= 80) {
@@ -148,7 +148,7 @@ const Result = () => {
       )}
 
       {/* Toggle Review Section */}
-      {questions.length > 0 && (
+      {Array.isArray(questions) && questions.length > 0 && (
         <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-slate-850">
           <button
             onClick={() => setShowReview(!showReview)}

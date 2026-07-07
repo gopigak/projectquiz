@@ -38,15 +38,15 @@ const Dashboard = () => {
     fetchQuizHistory();
   }, []);
 
-  if (loading || !user || courses.length === 0) {
+  if (loading || !user || !Array.isArray(courses) || courses.length === 0) {
     return <Loader />;
   }
 
   // Active courses processing
-  const courseProgressList = courses.map(course => {
+  const courseProgressList = Array.isArray(courses) ? courses.map(course => {
     const totalChapters = course.chaptersCount || 0;
-    const completedChaptersForCourse = user.completedChapters?.filter(c => c.startsWith(course.courseId)) || [];
-    const completedTopicsForCourse = user.completedTopics?.filter(t => t.startsWith(course.courseId)) || [];
+    const completedChaptersForCourse = Array.isArray(user.completedChapters) ? user.completedChapters.filter(c => c.startsWith(course.courseId)) : [];
+    const completedTopicsForCourse = Array.isArray(user.completedTopics) ? user.completedTopics.filter(t => t.startsWith(course.courseId)) : [];
     
     const chaptersCount = completedChaptersForCourse.length;
     const topicsCount = completedTopicsForCourse.length;
@@ -55,7 +55,7 @@ const Dashboard = () => {
     const totalTopics = totalChapters * 4;
     const progressPercent = totalTopics > 0 ? Math.round((topicsCount / totalTopics) * 100) : 0;
     
-    const hasPassedFinal = quizHistory.some(r => r.courseId === course.courseId && r.chapterIndex === -1 && r.passStatus === true);
+    const hasPassedFinal = Array.isArray(quizHistory) && quizHistory.some(r => r.courseId === course.courseId && r.chapterIndex === -1 && r.passStatus === true);
 
     return {
       ...course,
@@ -66,7 +66,7 @@ const Dashboard = () => {
       isFinished: progressPercent === 100,
       hasPassedFinal
     };
-  });
+  }) : [];
 
   // Find current course: first course with progress > 0 and < 100, fallback to first course
   const currentCourse = courseProgressList.find(c => c.progressPercent > 0 && c.progressPercent < 100) || courseProgressList[0];
@@ -369,7 +369,7 @@ const Dashboard = () => {
             <h3 className="font-extrabold text-slate-855 dark:text-white text-base">Recent Activities</h3>
           </div>
 
-          {quizHistory.length > 0 ? (
+          {Array.isArray(quizHistory) && quizHistory.length > 0 ? (
             <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
               {quizHistory.map((hist, index) => (
                 <div 
