@@ -50,12 +50,13 @@ const updateStreak = async (user, isMock = false) => {
  * @access  Public
  */
 const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, password } = req.body;
+  const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
   try {
     if (!getIsConnected()) {
       // In-Memory Mock Mode
-      const userExists = mockDb.users.find(u => u.email === email);
+      const userExists = mockDb.users.find(u => u.email.toLowerCase() === email);
       if (userExists) {
         return res.status(400).json({ message: 'User already exists' });
       }
@@ -128,12 +129,13 @@ const registerUser = async (req, res) => {
  * @access  Public
  */
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { password } = req.body;
+  const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
   try {
     if (!getIsConnected()) {
       // In-Memory Mock Mode
-      const user = mockDb.users.find(u => u.email === email);
+      const user = mockDb.users.find(u => u.email.toLowerCase() === email);
       if (user && (user.password === password || await bcrypt.compare(password, user.password).catch(() => false))) {
         if (user.isDisabled) {
           return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
