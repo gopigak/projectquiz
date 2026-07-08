@@ -40,7 +40,14 @@ export const AuthProvider = ({ children }) => {
       toast.success(`Welcome back, ${data.name}! 🔥`);
       return { success: true };
     } catch (error) {
-      const msg = error.response?.data?.message || 'Login failed. Please verify credentials.';
+      let msg = 'Login failed. Please try again.';
+      if (error.response) {
+        msg = error.response.data?.message || msg;
+      } else if (error.request) {
+        msg = 'Network Error: Server is unreachable. Please check if your backend is running.';
+      } else {
+        msg = error.message || msg;
+      }
       toast.error(msg);
       return { success: false, error: msg };
     } finally {
@@ -57,7 +64,14 @@ export const AuthProvider = ({ children }) => {
       toast.success(`Account created successfully! Welcome ${name}! 👋`);
       return { success: true };
     } catch (error) {
-      const msg = error.response?.data?.message || 'Registration failed. Email might be in use.';
+      let msg = 'Registration failed. Please try again.';
+      if (error.response) {
+        msg = error.response.data?.message || msg;
+      } else if (error.request) {
+        msg = 'Network Error: Server is unreachable. Please check if your backend is running.';
+      } else {
+        msg = error.message || msg;
+      }
       toast.error(msg);
       return { success: false, error: msg };
     } finally {
