@@ -14,9 +14,12 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecretjwtkey123!@#');
       
+      console.log(`[Middleware] Validating token for user ID: ${decoded.id}`);
+
       if (!getIsConnected()) {
         const user = mockDb.users.find((u) => u._id === decoded.id);
         if (!user) {
+          console.warn(`[Middleware] Authentication failed: User ID ${decoded.id} not found in mock database`);
           return res.status(401).json({ message: 'User not found in mock database' });
         }
         // Exclude password field for request safety
@@ -27,16 +30,18 @@ const protect = async (req, res, next) => {
 
       req.user = await User.findById(decoded.id).select('-password');
       if (!req.user) {
+        console.warn(`[Middleware] Authentication failed: User ID ${decoded.id} not found in MongoDB`);
         return res.status(401).json({ message: 'User not found with this token' });
       }
       next();
     } catch (error) {
-      console.error('JWT Verification Error:', error.message);
+      console.error('[Middleware] JWT Verification Error:', error.message);
       return res.status(401).json({ message: 'Not authorized, token validation failed' });
     }
   }
 
   if (!token) {
+    console.warn('[Middleware] Authentication failed: Token missing in Authorization header');
     return res.status(401).json({ message: 'Not authorized, token missing' });
   }
 };

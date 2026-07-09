@@ -53,11 +53,14 @@ const registerUser = async (req, res) => {
   const { name, password } = req.body;
   const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
+  console.log(`[Auth] Register attempt for email: ${email}`);
+
   try {
     if (!getIsConnected()) {
-      // In-Memory Mock Mode
+      console.log('[Auth] Registering in Mock Database Mode.');
       const userExists = mockDb.users.find(u => u.email.toLowerCase() === email);
       if (userExists) {
+        console.warn(`[Auth] Register failed: User already exists in mock database: ${email}`);
         return res.status(400).json({ message: 'User already exists' });
       }
 
@@ -75,6 +78,7 @@ const registerUser = async (req, res) => {
       };
 
       mockDb.users.push(newUser);
+      console.log(`[Auth] Registration successful in mock database for email: ${email}`);
 
       return res.status(201).json({
         _id: newUser._id,
@@ -89,8 +93,10 @@ const registerUser = async (req, res) => {
     }
 
     // Standard MongoDB Mode
+    console.log('[Auth] Registering in MongoDB Mode.');
     const userExists = await User.findOne({ email });
     if (userExists) {
+      console.warn(`[Auth] Register failed: User already exists in MongoDB: ${email}`);
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -105,6 +111,7 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
+      console.log(`[Auth] Registration successful in MongoDB for email: ${email}`);
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -116,9 +123,11 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
+      console.warn(`[Auth] Register failed: Invalid user data for email: ${email}`);
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
+    console.error(`[Auth] Database query or register handler error: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
@@ -132,40 +141,32 @@ const loginUser = async (req, res) => {
   const { password } = req.body;
   const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
+  console.log(`[Auth] Login attempt for email: ${email}`);
+
   try {
     if (!getIsConnected()) {
-      // In-Memory Mock Mode
+      console.log('[Auth] Running in Mock Database Mode.');
       const user = mockDb.users.find(u => u.email.toLowerCase() === email);
-      if (user && (user.password === password || await bcrypt.compare(password, user.password).catch(() => false))) {
-        if (user.isDisabled) {
-          return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
-        }
-        updateStreak(user, true);
-
-        return res.json({
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          xpPoints: user.xpPoints,
-          badges: user.badges,
-          streakCount: user.streakCount,
-          token: generateToken(user._id),
-        });
-      } else {
+      if (!user) {
+        console.warn(`[Auth] Login failed: User not found in mock database for email: ${email}`);
         return res.status(401).json({ message: 'Invalid email or password' });
       }
-    }
 
-    // Standard MongoDB Mode
-    const user = await User.findOne({ email });
-    if (user && (await user.matchPassword(password))) {
+      const isMatch = user.password === password || await bcrypt.compare(password, user.password).catch(() => false);
+      if (!isMatch) {
+        console.warn(`[Auth] Login failed: Password comparison failed for email: ${email}`);
+        return res.status(401).json({ message: 'Invalid email or password' });
+      }
+
       if (user.isDisabled) {
+        console.warn(`[Auth] Login failed: Account disabled for email: ${email}`);
         return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
       }
-      await updateStreak(user);
 
-      res.json({
+      console.log(`[Auth] Login successful for email: ${email} (Mock Mode)`);
+      updateStreak(user, true);
+
+      return res.json({
         _id: user._id,
         name: user.name,
         email: user.email,
@@ -175,10 +176,42 @@ const loginUser = async (req, res) => {
         streakCount: user.streakCount,
         token: generateToken(user._id),
       });
-    } else {
-      res.status(401).json({ message: 'Invalid email or password' });
     }
+
+    // Standard MongoDB Mode
+    console.log('[Auth] Running in MongoDB Mode.');
+    const user = await User.findOne({ email });
+    if (!user) {
+      console.warn(`[Auth] Login failed: User not found in MongoDB for email: ${email}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      console.warn(`[Auth] Login failed: Password comparison failed in MongoDB for email: ${email}`);
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.isDisabled) {
+      console.warn(`[Auth] Login failed: Account disabled for email: ${email}`);
+      return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
+    }
+
+    console.log(`[Auth] Login successful for email: ${email} (MongoDB Mode)`);
+    await updateStreak(user);
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      xpPoints: user.xpPoints,
+      badges: user.badges,
+      streakCount: user.streakCount,
+      token: generateToken(user._id),
+    });
   } catch (error) {
+    console.error(`[Auth] Database query or login handler error: ${error.message}`);
     res.status(500).json({ message: error.message });
   }
 };
