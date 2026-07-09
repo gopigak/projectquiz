@@ -54,7 +54,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health Check API
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'healthy', timestamp: new Date() });
+  const { getIsConnected } = require('./config/db');
+  res.status(200).json({ 
+    status: 'healthy', 
+    dbConnected: getIsConnected(),
+    timestamp: new Date() 
+  });
 });
 
 // Mount Routes
