@@ -14,7 +14,9 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email || !password || !confirmPassword) {
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+    if (!cleanName || !cleanEmail || !password || !confirmPassword) {
       return toast.error('Please input details into all fields.');
     }
     if (password !== confirmPassword) {
@@ -24,7 +26,7 @@ const Signup = () => {
       return toast.error('Password should contain at least 6 characters.');
     }
 
-    const res = await register(name, email, password);
+    const res = await register(cleanName, cleanEmail, password);
     if (res.success) {
       navigate('/dashboard');
     }
@@ -78,6 +80,9 @@ const Signup = () => {
                 type="email"
                 required
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="johndoe@example.com"

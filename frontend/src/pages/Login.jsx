@@ -12,11 +12,12 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !password) {
       return toast.error('Please fill in all credentials.');
     }
 
-    const res = await login(email, password);
+    const res = await login(cleanEmail, password);
     if (res.success) {
       navigate('/dashboard');
     }
@@ -59,6 +60,9 @@ const Login = () => {
                 type="email"
                 required
                 autoComplete="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="developer@example.com"
