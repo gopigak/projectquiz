@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 let isConnected = false;
+let dbPromise = null;
 
 const seedIfEmpty = async () => {
   try {
@@ -37,24 +38,38 @@ const seedIfEmpty = async () => {
 };
 
 const connectDB = async () => {
-  try {
-    const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
-    console.log(`Connecting to MongoDB at: ${mongoUri}...`);
-    
-    // Set low timeout (2.5 seconds) to fallback quickly if offline
-    const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 2500
-    });
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+  if (mongoose.connection.readyState === 1) {
     isConnected = true;
-    
-    // Auto-seed database if empty
-    await seedIfEmpty();
-  } catch (error) {
-    console.warn(`\n⚠️  MongoDB Connection Failed: ${error.message}`);
-    console.warn('⚙️  Switching server to In-Memory Mock Database Mode (fully functional sandbox for testing).\n');
-    isConnected = false;
+    return;
   }
+
+  if (dbPromise) {
+    return dbPromise;
+  }
+
+  dbPromise = (async () => {
+    try {
+      const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
+      console.log(`Connecting to MongoDB at: ${mongoUri}...`);
+      
+      // Set low timeout (2.5 seconds) to fallback quickly if offline
+      const conn = await mongoose.connect(mongoUri, {
+        serverSelectionTimeoutMS: 2500
+      });
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+      isConnected = true;
+      
+      // Auto-seed database if empty
+      await seedIfEmpty();
+    } catch (error) {
+      console.warn(`\n⚠️  MongoDB Connection Failed: ${error.message}`);
+      console.warn('⚙️  Switching server to In-Memory Mock Database Mode (fully functional sandbox for testing).\n');
+      isConnected = false;
+      dbPromise = null;
+    }
+  })();
+
+  return dbPromise;
 };
 
 const getIsConnected = () => isConnected;

@@ -21,6 +21,12 @@ connectDB();
 
 const app = express();
 
+// Middleware to ensure DB connection is established before processing requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
+
 // Configure CORS correctly for local development and deployed frontend
 const allowedOrigins = [
   'http://localhost:5173',
