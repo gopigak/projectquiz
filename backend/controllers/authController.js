@@ -53,22 +53,22 @@ const registerUser = async (req, res) => {
   const { name, password } = req.body;
   const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
 
-  console.log(`[Auth] Register attempt for email: ${email}`);
+  console.log(`[Auth Signup] Registration attempt for email: "${email}" | Mode: ${getIsConnected() ? 'MongoDB Atlas' : 'Mock DB'}`);
 
   try {
     if (!getIsConnected()) {
-      console.log('[Auth] Registering in Mock Database Mode.');
+      console.warn('[Auth Signup] Running in Mock Database Mode.');
       const userExists = mockDb.users.find(u => u.email.toLowerCase() === email);
       if (userExists) {
-        console.warn(`[Auth] Register failed: User already exists in mock database: ${email}`);
+        console.warn(`[Auth Signup] Registration failed: User already exists in mock database: ${email}`);
         return res.status(400).json({ message: 'User already exists' });
       }
 
       const newUser = {
         _id: 'mock-user-id-' + Math.random().toString(36).substr(2, 9),
-        name,
+        name: name.trim(),
         email,
-        password, // Raw check for simplicity in mock
+        password,
         role: 'user',
         xpPoints: 100,
         badges: ['Welcome Cadet'],
@@ -78,7 +78,7 @@ const registerUser = async (req, res) => {
       };
 
       mockDb.users.push(newUser);
-      console.log(`[Auth] Registration successful in mock database for email: ${email}`);
+      console.log(`✅ [Auth Signup] Registration successful in mock database for email: ${email}`);
 
       return res.status(201).json({
         _id: newUser._id,
@@ -93,15 +93,15 @@ const registerUser = async (req, res) => {
     }
 
     // Standard MongoDB Mode
-    console.log('[Auth] Registering in MongoDB Mode.');
+    console.log('[Auth Signup] Querying MongoDB Atlas for existing email...');
     const userExists = await User.findOne({ email });
     if (userExists) {
-      console.warn(`[Auth] Register failed: User already exists in MongoDB: ${email}`);
+      console.warn(`[Auth Signup] Registration failed: User already exists in MongoDB Atlas: ${email}`);
       return res.status(400).json({ message: 'User already exists' });
     }
 
     const user = await User.create({
-      name,
+      name: name.trim(),
       email,
       password,
       xpPoints: 100,
@@ -111,7 +111,7 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
-      console.log(`[Auth] Registration successful in MongoDB for email: ${email}`);
+      console.log(`✅ [Auth Signup] Registration successful in MongoDB Atlas for email: ${email}`);
       res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -123,11 +123,11 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       });
     } else {
-      console.warn(`[Auth] Register failed: Invalid user data for email: ${email}`);
+      console.warn(`[Auth Signup] Registration failed: Invalid user data for email: ${email}`);
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    console.error(`[Auth] Database query or register handler error: ${error.message}`);
+    console.error(`❌ [Auth Signup] Exception during registration: ${error.message}`, error.stack);
     res.status(500).json({ message: error.message });
   }
 };
@@ -140,30 +140,34 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   const { password } = req.body;
   const email = req.body.email ? req.body.email.toLowerCase().trim() : '';
+  const isConnected = getIsConnected();
 
-  console.log(`[Auth] Login attempt for email: ${email}`);
+  console.log(`\n--- [Auth Login Request] ---`);
+  console.log(`[Auth Login] Email: "${email}"`);
+  console.log(`[Auth Login] DB Active Mode: ${isConnected ? '🟢 MongoDB Atlas' : '🟡 In-Memory Mock DB'}`);
 
   try {
-    if (!getIsConnected()) {
-      console.log('[Auth] Running in Mock Database Mode.');
+    if (!isConnected) {
+      console.warn('⚠️  [Auth Login] Backend is currently in Mock Database Mode.');
       const user = mockDb.users.find(u => u.email.toLowerCase() === email);
       if (!user) {
-        console.warn(`[Auth] Login failed: User not found in mock database for email: ${email}`);
+        console.warn(`❌ [Auth Login Failed] User "${email}" NOT FOUND in Mock Database.`);
+        console.warn(`ℹ️  Note: In Mock Mode, available default users are: admin@quizapp.com, student@quizapp.com.`);
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       const isMatch = user.password === password || await bcrypt.compare(password, user.password).catch(() => false);
       if (!isMatch) {
-        console.warn(`[Auth] Login failed: Password comparison failed for email: ${email}`);
+        console.warn(`❌ [Auth Login Failed] Password mismatch for user "${email}" in Mock Database.`);
         return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       if (user.isDisabled) {
-        console.warn(`[Auth] Login failed: Account disabled for email: ${email}`);
-        return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
+        console.warn(`❌ [Auth Login Failed] Account disabled for "${email}".`);
+        return res.status(403).json({ message: 'Your account has been disabled by the Administrator.' });
       }
 
-      console.log(`[Auth] Login successful for email: ${email} (Mock Mode)`);
+      console.log(`✅ [Auth Login Success] Logged in as "${user.name}" (${user.role}) via Mock Mode.`);
       updateStreak(user, true);
 
       return res.json({
@@ -178,26 +182,27 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Standard MongoDB Mode
-    console.log('[Auth] Running in MongoDB Mode.');
+    // Standard MongoDB Atlas Mode
+    console.log(`[Auth Login] Searching MongoDB Atlas for email: "${email}"...`);
     const user = await User.findOne({ email });
     if (!user) {
-      console.warn(`[Auth] Login failed: User not found in MongoDB for email: ${email}`);
+      console.warn(`❌ [Auth Login Failed] User "${email}" NOT FOUND in MongoDB Atlas database.`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    console.log(`[Auth Login] User found ("${user.name}", Role: ${user.role}). Verifying password with bcrypt...`);
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      console.warn(`[Auth] Login failed: Password comparison failed in MongoDB for email: ${email}`);
+      console.warn(`❌ [Auth Login Failed] Password comparison failed for "${email}" in MongoDB Atlas.`);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     if (user.isDisabled) {
-      console.warn(`[Auth] Login failed: Account disabled for email: ${email}`);
-      return res.status(403).json({ message: 'Your account has been disabled by the Administrator. Please contact support.' });
+      console.warn(`❌ [Auth Login Failed] Account is disabled for "${email}".`);
+      return res.status(403).json({ message: 'Your account has been disabled by the Administrator.' });
     }
 
-    console.log(`[Auth] Login successful for email: ${email} (MongoDB Mode)`);
+    console.log(`✅ [Auth Login Success] User "${user.name}" (${user.role}) authenticated successfully via MongoDB Atlas!`);
     await updateStreak(user);
 
     res.json({
@@ -211,10 +216,11 @@ const loginUser = async (req, res) => {
       token: generateToken(user._id),
     });
   } catch (error) {
-    console.error(`[Auth] Database query or login handler error: ${error.message}`);
-    res.status(500).json({ message: error.message });
+    console.error(`❌ [Auth Login Exception] Error during login handler: ${error.message}`, error.stack);
+    res.status(500).json({ message: `Server login error: ${error.message}` });
   }
 };
+
 
 /**
  * @desc    Get user profile
