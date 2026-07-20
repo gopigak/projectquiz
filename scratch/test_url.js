@@ -1,7 +1,7 @@
 const http = require('http');
 const https = require('https');
 
-const url = 'http://localhost:5000/api/health';
+const url = 'https://projectquiz-six.vercel.app/api/health';
 const client = url.startsWith('https') ? https : http;
 
 const req = client.get(url, (res) => {

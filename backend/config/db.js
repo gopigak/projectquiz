@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 
 let isConnected = false;
 let dbPromise = null;
+let lastAttemptTime = 0;
+const COOLDOWN_MS = 60000; // 1 minute cooldown between reconnection attempts
 
 const seedIfEmpty = async () => {
   try {
@@ -47,6 +49,14 @@ const connectDB = async () => {
     return dbPromise;
   }
 
+  // If connection is offline, do not block the request with a new connection attempt during the cooldown
+  const now = Date.now();
+  if (!isConnected && (now - lastAttemptTime < COOLDOWN_MS)) {
+    return;
+  }
+
+  lastAttemptTime = now;
+
   dbPromise = (async () => {
     try {
       const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI || 'mongodb://localhost:27017/quizapp';
@@ -58,6 +68,7 @@ const connectDB = async () => {
       });
       console.log(`MongoDB Connected: ${conn.connection.host}`);
       isConnected = true;
+      dbPromise = null; // Clear so next check can query actual readyState
       
       // Auto-seed database if empty
       await seedIfEmpty();
